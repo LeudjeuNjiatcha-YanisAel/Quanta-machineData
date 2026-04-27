@@ -252,29 +252,48 @@ def delete_student(id):
 # ROUTE 7: Web Scrapper (Via Scraping API)
 @app.route('/scrapper', methods=["POST"])
 def scrapper():
-    url_cible = request.form.get("url")
-    if not url_cible:
-        return "Veuillez fournir une URL valide.", 400
+    # On récupère les critères du formulaire
+    pays = request.form.get("pays", "Cameroun")
+    filiere = request.form.get("filiere", "Informatique")
+    niveau = request.form.get("niveau", "Licence")
+    
+    # On définit une URL par défaut car le formulaire n'en demande pas
+    url_cible = f"https://fr.wikipedia.org/wiki/{filiere}"
         
     try:
-        if SCRAPING_API_KEY != "VOTRE_CLE_SCRAPING":
+        # Appel à l'API de Scraping (ScrapingAnt)
+        if SCRAPING_API_KEY and SCRAPING_API_KEY != "VOTRE_CLE_SCRAPING":
             api_url = f"https://api.scrapingant.com/v2/general?url={url_cible}&x-api-key={SCRAPING_API_KEY}"
-            response = requests.get(api_url, timeout=10)
+            response = requests.get(api_url, timeout=15)
             data = response.json()
             html_content = data.get('content', '')
         else:
-            # Simulation si pas de clé API (Scraping standard)
+            # Simulation sans clé API
             response = requests.get(url_cible, timeout=10)
             html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Logique d'extraction (Simulation de parsing d'une table)
-        # Normalement on chercherait : soup.find_all('tr') ...
-        new_students = [
-            ("Lovelace", "Ada", "Femme", "Londres", "M2", "Algorithmique", 19.5, 20, 36, 95),
-            ("Turing", "Alan", "Homme", "Bletchley", "Doc", "Cryptographie", 18.0, 18, 41, 98)
-        ]
+        # Génération de données "scrappées" intelligentes basées sur tes choix
+        # Dans un vrai projet, on parserait soup.find_all(...)
+        prenoms = ["Jean", "Marie", "Alain", "Sophie", "Paul", "Alice", "Yann", "Aminata", "Koffi", "Fatou"]
+        noms = ["Dupont", "Traoré", "Kamga", "Müller", "Smith", "Nguyen", "Diallo", "Zongo"]
+        
+        new_students = []
+        for _ in range(3): # On génère 3 étudiants par clic
+            s = (
+                random.choice(noms), 
+                random.choice(prenoms), 
+                random.choice(["Homme", "Femme"]), 
+                pays, 
+                niveau, 
+                filiere, 
+                round(random.uniform(10, 19), 2), # Moyenne
+                random.randint(5, 25),            # Temps étude
+                random.randint(18, 30),           # Age
+                random.randint(40, 100)           # Participation
+            )
+            new_students.append(s)
 
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
@@ -285,11 +304,13 @@ def scrapper():
             ''', s)
         conn.commit()
         conn.close()
-        # On pourrait ajouter un message flash ici
+        
         return redirect(url_for('resultats'))
     except Exception as e:
-        return f"Erreur de scrapping API : {e}"
+        print(f"Erreur Scrapping: {e}")
+        return f"Erreur lors de l'extraction : {e}. Vérifiez votre clé API dans le fichier .env"
+
+init_db()
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
