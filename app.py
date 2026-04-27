@@ -151,7 +151,12 @@ def api_analyse():
         if api_key:
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
-            prompt = f"Expert academic analysis: {stats}. Format STRICT JSON: {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}. Use HTML tags inside strings for formatting. DO NOT output anything else than JSON."
+            prompt = f"""
+             Tu es un expert en analyse statistique et en education: {stats}. 
+             Format JSON STRICT : {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}.
+             Répond en français, tu marqueras les texte important en gras sans utiliser
+             les balises HTML et ton analyse ne doit pas etre court.
+             NE PAS exporter autre chose que du JSON."""
             response = model.generate_content(prompt)
             
             clean_text = response.text.strip()
