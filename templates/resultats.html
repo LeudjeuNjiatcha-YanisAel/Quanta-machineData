@@ -2,11 +2,9 @@
 {% set active_page = 'resultats' %}
 
 {% block content %}
-<!-- ============================================== -->
-<!-- SECTION 1 : STATISTIQUES                       -->
-<!-- ============================================== -->
+
 <div class="summary-cards">
-    <!-- Carte 1 -->
+
     <div class="card">
         <div class="card-icon blue-bg"><i class="fa-solid fa-users"></i></div>
         <div class="card-info">
@@ -14,7 +12,7 @@
             <p>Total Étudiants</p>
         </div>
     </div>
-    <!-- Carte 2 -->
+
     <div class="card">
         <div class="card-icon yellow-bg"><i class="fa-solid fa-star"></i></div>
         <div class="card-info">
@@ -22,7 +20,7 @@
             <p>Moyenne Globale</p>
         </div>
     </div>
-    <!-- Carte 3 -->
+
     <div class="card">
         <div class="card-icon red-bg"><i class="fa-solid fa-handshake-angle"></i></div>
         <div class="card-info">
@@ -30,11 +28,30 @@
             <p>Contribution Moyenne</p>
         </div>
     </div>
+    <div class="card">
+        <div class="card-icon green-bg"><i class="fa-solid fa-users-line"></i></div>
+        <div class="card-info">
+            <h3>{{stats.get('age_moyen',0)}}</h3>
+            <p>Age Moyen</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-icon purple-bg"><i class="fa-solid fa-trophy"></i></div>
+        <div class="card-info">
+            <h3>{{stats.get('meilleure_moyenne',0)}}</h3>
+            <p>Meilleure Moyenne</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-icon pink-bg"><i class="fa-solid fa-pen"></i></div>
+        <div class="card-info">
+            <h3>{{stats.get('pire_moyenne',0)}}</h3>
+            <p>Faible Moyenne</p>
+        </div>
+    </div>
+
 </div>
 
-<!-- ============================================== -->
-<!-- SECTION 3 : GRAPHIQUES (CHART JS)              -->
-<!-- ============================================== -->
 <div class="charts-grid panel hide-on-print" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
     <div class="chart-box">
         <h3 class="chart-title">Répartition par Niveau</h3>
@@ -54,35 +71,35 @@
     </div>
 </div>
 
-<!-- ============================================== -->
-<!-- SECTION : ANALYSE IA (3 DIVS)                  -->
-<!-- ============================================== -->
 <div class="panel hide-on-print" style="border: 1px solid rgba(0, 242, 254, 0.3);">
     <div class="panel-header">
-        <h2><i class="fa-solid fa-robot"></i> Analyse Prédictive IA</h2>
+        <h2><i class="fa-solid fa-robot"></i> Analyse automatisés</h2>
         <button id="start-ai" class="btn btn-primary" style="padding: 8px 15px; font-size: 11px;">
             <i class="fa-solid fa-wand-magic-sparkles"></i> Lancer l'analyse interactive
         </button>
     </div>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-        <div class="card" style="flex-direction: column; align-items: flex-start; background: rgba(0, 242, 254, 0.05); min-height: 120px;">
-            <h4 style="color: var(--secondary); margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass"></i> Synthèse</h4>
+        <div class="card"
+            style="flex-direction: column; align-items: flex-start; background: rgba(0, 242, 254, 0.05); min-height: 120px;">
+            <h4 style="color: var(--secondary); margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass"></i>
+                Synthèse</h4>
             <p id="ai-summary" style="font-size: 13px; color: var(--text-main); line-height: 1.5;"></p>
         </div>
-        <div class="card" style="flex-direction: column; align-items: flex-start; background: rgba(242, 0, 86, 0.05); min-height: 120px;">
-            <h4 style="color: #f20056; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Risques</h4>
+        <div class="card"
+            style="flex-direction: column; align-items: flex-start; background: rgba(242, 0, 86, 0.05); min-height: 120px;">
+            <h4 style="color: #f20056; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Risques
+            </h4>
             <p id="ai-risks" style="font-size: 13px; color: var(--text-main); line-height: 1.5;"></p>
         </div>
-        <div class="card" style="flex-direction: column; align-items: flex-start; background: rgba(16, 241, 31, 0.05); min-height: 120px;">
-            <h4 style="color: var(--tertiary); margin-bottom: 10px;"><i class="fa-solid fa-lightbulb"></i> Recommandations</h4>
+        <div class="card"
+            style="flex-direction: column; align-items: flex-start; background: rgba(16, 241, 31, 0.05); min-height: 120px;">
+            <h4 style="color: var(--tertiary); margin-bottom: 10px;"><i class="fa-solid fa-lightbulb"></i>
+                Recommandations</h4>
             <p id="ai-recs" style="font-size: 13px; color: var(--text-main); line-height: 1.5;"></p>
         </div>
     </div>
 </div>
 
-<!-- ============================================== -->
-<!-- SECTION 4 : TABLEAU DE LA BASE DE DONNÉES      -->
-<!-- ============================================== -->
 <div class="panel">
     <div class="panel-header">
         <h2><i class="fa-solid fa-list-ul"></i> Étudiants Enregistrés</h2>
@@ -92,7 +109,7 @@
             </a>
         </div>
     </div>
-    
+
     <div class="table-container">
         <table>
             <thead>
@@ -123,8 +140,11 @@
                     <td style="color: var(--text-muted);">{{ row[10] }}%</td>
                     <td class="hide-on-print">
                         <div class="action-buttons">
-                            <a href="{{ url_for('collecte', edit_id=row[0]) }}" class="btn-icon edit" title="Editer"><i class="fa-solid fa-pen"></i></a>
-                            <a href="javascript:void(0)" onclick="showDeleteModal('{{ url_for('delete_student', id=row[0]) }}')" class="btn-icon delete" title="Supprimer"><i class="fa-solid fa-trash"></i></a>
+                            <a href="{{ url_for('collecte', edit_id=row[0]) }}" class="btn-icon edit" title="Editer"><i
+                                    class="fa-solid fa-pen"></i></a>
+                            <a href="javascript:void(0)"
+                                onclick="showDeleteModal('{{ url_for('delete_student', id=row[0]) }}')"
+                                class="btn-icon delete" title="Supprimer"><i class="fa-solid fa-trash"></i></a>
                         </div>
                     </td>
                 </tr>
@@ -143,13 +163,12 @@
 
 {% block scripts %}
 <script>
-    const textData = '{{ chart_data | safe }}';
-    console.log("Chart Data:", textData);
-    
-    if (textData && textData !== '{}') {
-        const chartData = JSON.parse(textData);
-        
-        // --- GRAPHIQUE 1 : DOUGHNUT (Niveau) ---
+    // Injection directe de l'objet JSON 
+    const chartData = {{ chart_data | safe }};
+    console.log("Chart Data:", chartData);
+
+    if (chartData && Object.keys(chartData).length > 0) {
+
         const ctx1 = document.getElementById('niveauChart');
         if (ctx1) {
             new Chart(ctx1.getContext('2d'), {
@@ -162,15 +181,20 @@
                         borderWidth: 0
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    plugins: { legend: { labels: { color: '#ffffff' } } },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
                     cutout: '70%'
                 }
             });
         }
 
-        // --- GRAPHIQUE 2 : SCATTER (Participation vs Moyenne) ---
         const ctx2 = document.getElementById('regressionChart');
         if (ctx2) {
             new Chart(ctx2.getContext('2d'), {
@@ -180,21 +204,52 @@
                         label: 'Corrélation Part/Note',
                         data: chartData.temps_vs_moyenne || [],
                         backgroundColor: '#00f2fe',
-                        pointRadius: 6, pointHoverRadius: 9
+                        pointRadius: 6,
+                        pointHoverRadius: 9
                     }]
                 },
                 options: {
                     responsive: true,
                     scales: {
-                        x: { title: {display:true, text:'Temps étude (H)', color:'#9ca3af'}, grid: { color: 'rgba(255,255,255,0.05)' }, ticks:{color:'#fff'}, min:0 },
-                        y: { title: {display:true, text:'Moyenne', color:'#9ca3af'}, grid: { color: 'rgba(255,255,255,0.05)' }, ticks:{color:'#fff'}, min: 0, max: 20 }
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Temps étude (H)',
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            },
+                            min: 0
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Moyenne',
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            },
+                            min: 0,
+                            max: 20
+                        }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         }
 
-        // --- GRAPHIQUE 3 : BAR (Filières) ---
         const ctx3 = document.getElementById('filiereChart');
         if (ctx3) {
             new Chart(ctx3.getContext('2d'), {
@@ -212,15 +267,34 @@
                 options: {
                     responsive: true,
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#fff' } },
-                        x: { grid: { display: false }, ticks: { color: '#fff' } }
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         }
 
-        // --- GRAPHIQUE 4 : LINE (Âge vs Moyenne) ---
+        // GRAPHIQUE 4 
         const ctx4 = document.getElementById('ageLineChart');
         if (ctx4) {
             const ageEntries = Object.entries(chartData.age_moyenne || {}).sort((a, b) => a[0] - b[0]);
@@ -241,39 +315,62 @@
                 options: {
                     responsive: true,
                     scales: {
-                        y: { min: 0, max: 20, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#fff' } },
-                        x: { ticks: { color: '#fff' } }
+                        y: {
+                            min: 0,
+                            max: 20,
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#fff'
+                            }
+                        }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         }
 
-        // --- GESTION DE L'IA INTERACTIVE ---
+        // --- GESTION DE L'IA INTERACTIVE (À LA DEMANDE) ---
         const aiBtn = document.getElementById('start-ai');
-        const aiDataRaw = '{{ ai_analysis | safe }}';
-        
-        if (aiBtn && aiDataRaw) {
-            const aiData = JSON.parse(aiDataRaw);
-            
+
+        if (aiBtn) {
             async function typeEffect(element, text) {
                 element.innerHTML = "";
                 for (let i = 0; i < text.length; i++) {
                     element.innerHTML += text.charAt(i);
-                    await new Promise(r => setTimeout(r, 15));
+                    await new Promise(r => setTimeout(r, 10)); // Un peu plus rapide
                 }
             }
 
             aiBtn.addEventListener('click', async () => {
                 aiBtn.disabled = true;
                 aiBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyse en cours...';
-                
-                await typeEffect(document.getElementById('ai-summary'), aiData.summary);
-                await typeEffect(document.getElementById('ai-risks'), aiData.risks);
-                await typeEffect(document.getElementById('ai-recs'), aiData.recommendations);
-                
-                aiBtn.innerHTML = '<i class="fa-solid fa-check"></i> Analyse Terminée';
-                aiBtn.style.background = "var(--tertiary)";
+
+                try {
+                    const response = await fetch('/api/analyse');
+                    const aiData = await response.json();
+
+                    await typeEffect(document.getElementById('ai-summary'), aiData.summary);
+                    await typeEffect(document.getElementById('ai-risks'), aiData.risks);
+                    await typeEffect(document.getElementById('ai-recs'), aiData.recommendations);
+
+                    aiBtn.innerHTML = '<i class="fa-solid fa-check"></i> Analyse Terminée';
+                    aiBtn.style.background = "var(--tertiary)";
+                } catch (error) {
+                    console.error("Erreur IA:", error);
+                    aiBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erreur';
+                    aiBtn.disabled = false;
+                }
             });
         }
     }

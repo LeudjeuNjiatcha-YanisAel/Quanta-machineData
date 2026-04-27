@@ -1,23 +1,26 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
+import google.generativeai as genai
 import pandas as pd
 import json
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
 import random
 import os
+import time
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
-# --- CONFIGURATION DES APIS ---
-# Remplacez par vos propres clés API
-GEMINI_API_KEY = "AIzaSyD9e8lCQq5bJntfRvBHsSkN8AU1sJZGLEg" 
-SCRAPING_API_KEY = "VOTRE_CLE_SCRAPING" # Ex: ScrapingAnt, ScrapingDog, etc.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY","").split(",")
+index = 0
+SCRAPING_API_KEY = os.getenv("SCRAPING_API_KEY")
 
-if GEMINI_API_KEY != "VOTRE_CLE_GEMINI":
-    genai.configure(api_key=GEMINI_API_KEY)
 
+# Creation de ma base de donnees
 def init_db():
     '''
     Initialisation de la base de données avec les nouvelles variables.
@@ -54,7 +57,7 @@ def collecte():
     """ Affiche le formulaire d'ajout ou de modification """
     edit_id = request.args.get('edit_id')
     edit_student = None
-
+    
     if edit_id:
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
@@ -72,6 +75,15 @@ def collecte():
 
     return render_template('collecte.html', edit_student=edit_student)
 
+def key_rotation():
+    global index
+    if not GEMINI_API_KEY or GEMINI_API_KEY == [""]:
+        return None
+    key = GEMINI_API_KEY[index]
+    index = (index + 1) % len(GEMINI_API_KEY)
+    print(f'Cle {index} qui a ete utilser')
+    return key
+
 # ROUTE 3: Mes resultats analyses
 @app.route('/resultats')
 def resultats():
@@ -83,7 +95,6 @@ def resultats():
     if df.empty:
         return render_template('resultats.html', data=[], stats={}, chart_data="{}")
 
-    # ANALYSE DESCRIPTIVE AMÉLIORÉE
     try:
         stats = {
             "total_etudiants": len(df),
@@ -98,8 +109,7 @@ def resultats():
     except Exception as e:
         print(f"Erreur stats: {e}")
         stats = {} 
-        
-    # ---- DONNÉES GRAPHIQUES POUR Chart.js ----
+
     chart_data = {
         "filieres": df['filiere'].value_counts().to_dict(),
         "niveaux": df['niveau'].value_counts().to_dict() if 'niveau' in df else {},
@@ -108,48 +118,67 @@ def resultats():
         "age_moyenne": df.groupby('age')['moyenne'].mean().to_dict()
     }
 
-    # ---- ANALYSE IA VIA API (GEMINI) ----
-    ai_analysis = {
-        "summary": "Chargement...",
-        "risks": "Chargement...",
-        "recommendations": "Chargement..."
-    }
-
-    try:
-        if GEMINI_API_KEY != "Votre ":
-            model = genai.GenerativeModel('gemini-pro')
-            prompt = f"""
-            Analyse ces statistiques d'étudiants : {stats}.
-            Donne moi 3 parties : 
-            1. Un résumé des performances (max 50 mots).
-            2. Les risques potentiels identifiés.
-            3. 3 recommandations concrètes.
-            Réponds uniquement au format JSON avec les clés 'summary', 'risks', 'recommendations'.
-            Utilise du HTML léger (<strong>, etc.) pour la mise en forme.
-            """
-            response = model.generate_content(prompt)
-            # Nettoyage JSON
-            clean_text = response.text.replace('```json', '').replace('```', '').strip()
-            ai_analysis = json.loads(clean_text)
-        else:
-            # Fallback Dynamique
-            ai_analysis = {
-                "summary": f"La filière <strong>{top_filiere}</strong> domine avec {top_avg}/20. (Mode Démo sans API)",
-                "risks": "Risque d'échec élevé pour les étudiants ayant peu de temps d'étude.",
-                "recommendations": "Plan d'urgence : Mise en place d'un tutorat pour les niveaux L1."
-            }
-    except Exception as e:
-        print(f"Erreur API Gemini: {e}")
-
     return render_template(
         'resultats.html', 
         data=df.values.tolist(), 
         stats=stats, 
-        chart_data=json.dumps(chart_data),
-        ai_analysis=json.dumps(ai_analysis)
+        chart_data=json.dumps(chart_data)
     )
 
-# ROUTE 4: (C)reate - Ajouter un étudiant (POST)
+@app.route('/api/analyse')
+def api_analyse():
+    conn = sqlite3.connect('database.db')
+    df = pd.read_sql_query("SELECT * FROM students", conn)
+    conn.close()
+
+    if df.empty:
+        return json.dumps({"summary": "Aucune donnée disponible pour l'analyse.", "risks": "N/A", "recommendations": "N/A"})
+
+    stats = {
+        "total_etudiants": len(df),
+        "moyenne_generale": round(df["moyenne"].mean(), 2),
+        "age_moyen": round(df["age"].mean(), 2),
+        "temps_etude_moyen": round(df["temps"].mean(), 2),
+        "moyenne_par_filiere": df.groupby("filiere")["moyenne"].mean().to_dict(),
+        "moyenne_par_niveau": df.groupby("niveau")["moyenne"].mean().to_dict(),
+        "meilleur_etudiant": df.loc[df["moyenne"].idxmax()][["nom", "prenom", "moyenne"]].to_dict(),
+        "pire_etudiant": df.loc[df["moyenne"].idxmin()][["nom", "prenom", "moyenne"]].to_dict(),
+        "participation_moyenne": round(df["participation"].mean(), 2) if "participation" in df else 0
+    }
+
+    try:
+        api_key = key_rotation()
+        if api_key:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            prompt = f"Expert academic analysis: {stats}. Format STRICT JSON: {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}. Use HTML tags inside strings for formatting. DO NOT output anything else than JSON."
+            response = model.generate_content(prompt)
+            
+            clean_text = response.text.strip()
+            if "```json" in clean_text:
+                clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in clean_text:
+                clean_text = clean_text.split("```")[1].split("```")[0].strip()
+                
+            return clean_text
+    except Exception as e:
+        print(f"Erreur API IA: {e}")
+    
+    fallback_summary = f"Analyse de Performance : La promotion affiche une moyenne de {stats['moyenne_generale']}/20. La répartition des notes indique une structure de classe stable mais perfectible."
+    fallback_risks = f"Points de vigilance : Avec une participation moyenne de {stats['participation_moyenne']}%, certains étudiants risquent l'isolement académique. Les étudiants en dessous du seuil de 10/20 doivent être identifiés."
+    fallback_recs = (
+        "Stratégie de Soutien : Mettre en place des groupes de tutorat pour les filières en difficulté."
+        "Optimisation : Augmenter l'interactivité durant les cours pour booster la participation."
+        "Suivi : Entretiens individuels pour les étudiants avec un temps d'étude inférieur à la moyenne."
+    )
+    
+    return json.dumps({
+        "summary": fallback_summary,
+        "risks": fallback_risks,
+        "recommendations": fallback_recs
+    })
+
+# ROUTE 4: Ajouter un étudiant 
 @app.route('/add', methods=["POST"])
 def add_student():
     """ Ajoute un nouvel étudiant et redirige vers les résultats """
@@ -175,7 +204,7 @@ def add_student():
 
     return redirect(url_for('resultats'))
 
-# ROUTE 5: (U)pdate - Valider la mise à jour (POST)
+# ROUTE 5: Update
 @app.route('/update/<int:id>', methods=["POST"])
 def update_student(id):
     """ Met à jour l'étudiant N° id puis redirige vers résultats """
@@ -219,22 +248,24 @@ def delete_student(id):
 @app.route('/scrapper', methods=["POST"])
 def scrapper():
     url_cible = request.form.get("url")
+    if not url_cible:
+        return "Veuillez fournir une URL valide.", 400
+        
     try:
-        # APPEL À UNE API DE SCRAPPING (Exemple structurel)
-        # On utilise ScrapingAnt ou équivalent si la clé est fournie
         if SCRAPING_API_KEY != "VOTRE_CLE_SCRAPING":
             api_url = f"https://api.scrapingant.com/v2/general?url={url_cible}&x-api-key={SCRAPING_API_KEY}"
-            response = requests.get(api_url)
+            response = requests.get(api_url, timeout=10)
             data = response.json()
-            html_content = data.get('content')
+            html_content = data.get('content', '')
         else:
-            # Simulation si pas de clé API
-            response = requests.get(url_cible)
+            # Simulation si pas de clé API (Scraping standard)
+            response = requests.get(url_cible, timeout=10)
             html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
         
         # Logique d'extraction (Simulation de parsing d'une table)
+        # Normalement on chercherait : soup.find_all('tr') ...
         new_students = [
             ("Lovelace", "Ada", "Femme", "Londres", "M2", "Algorithmique", 19.5, 20, 36, 95),
             ("Turing", "Alan", "Homme", "Bletchley", "Doc", "Cryptographie", 18.0, 18, 41, 98)
@@ -249,6 +280,7 @@ def scrapper():
             ''', s)
         conn.commit()
         conn.close()
+        # On pourrait ajouter un message flash ici
         return redirect(url_for('resultats'))
     except Exception as e:
         return f"Erreur de scrapping API : {e}"

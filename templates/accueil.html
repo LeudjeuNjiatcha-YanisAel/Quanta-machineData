@@ -5,23 +5,28 @@
 <div class="hero-section reveal" style="animation-delay: 0.1s;">
     <h1 class="hero-title">
         Maîtrisez vos données avec <br>
-        <span style="background: linear-gradient(45deg, var(--secondary), var(--tertiary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">MACHINE DATA HUB</span>
+        <span
+            style="background: linear-gradient(45deg, var(--secondary), var(--tertiary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">MACHINE
+            DATA CORE</span>
     </h1>
     <p class="hero-subtitle">
-        Une plateforme analytique de pointe conçue pour la gestion et l'analyse avancée des performances académiques. Transformez vos données brutes en informations stratégiques.
+        Une plateforme analytique de pointe dernière génération conçue pour la gestion et l'analyse avancée des
+        performances académiques. Transformez vos données brutes en informations stratégiques.
     </p>
     <div class="btn-actions" style="justify-content: center; gap: 20px;">
-        <a href="{{ url_for('collecte') }}" class="btn btn-primary reveal" style="padding: 15px 40px; font-size: 15px; animation-delay: 0.3s;">
+        <a href="{{ url_for('collecte') }}" class="btn btn-primary reveal"
+            style="padding: 15px 40px; font-size: 15px; animation-delay: 0.3s;">
             <i class="fa-solid fa-rocket"></i> Commencer maintenant
         </a>
-        <a href="{{ url_for('resultats') }}" class="btn btn-light reveal" style="padding: 15px 40px; font-size: 15px; animation-delay: 0.4s;">
+        <a href="{{ url_for('resultats') }}" class="btn btn-light reveal"
+            style="padding: 15px 40px; font-size: 15px; animation-delay: 0.4s;">
             <i class="fa-solid fa-chart-line"></i> Voir les analyses
         </a>
     </div>
 </div>
 
 <div class="features-grid">
-    <div class="feature-item reveal" style="animation-delay: 0.5s;">
+    <div class="feature-item reveal" style="animation-delay: 1s;">
         <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
         <h3>Collecte Rapide</h3>
         <p>Interface intuitive pour une saisie rapide des données étudiants avec validation en temps réel.</p>
@@ -40,7 +45,8 @@
 
 <div class="panel reveal" style="text-align: center; border-style: dashed; animation-delay: 0.8s;">
     <h3 style="margin-bottom: 15px; color: var(--secondary);">Prêt à optimiser votre suivi ?</h3>
-    <p style="color: var(--text-muted); margin-bottom: 25px;">Rejoignez les utilisateurs qui font confiance à MACHINE DATA HUB pour leur gestion académique.</p>
+    <p style="color: var(--text-muted); margin-bottom: 25px;">Rejoignez les utilisateurs qui font confiance à MACHINE
+        DATA HUB pour leur gestion académique.</p>
     <a href="{{ url_for('collecte') }}" class="btn btn-light">Accéder au formulaire</a>
 </div>
 {% endblock %}

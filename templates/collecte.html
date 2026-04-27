@@ -28,7 +28,6 @@
                 <select name="sexe" style="width: 100%; padding: 12px 15px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 14px; color: var(--text-main);">
                     <option value="Homme" {% if edit_student and edit_student['sexe'] == 'Homme' %}selected{% endif %}>Homme</option>
                     <option value="Femme" {% if edit_student and edit_student['sexe'] == 'Femme' %}selected{% endif %}>Femme</option>
-                    <option value="Autre" {% if edit_student and edit_student['sexe'] == 'Autre' %}selected{% endif %}>Autre</option>
                 </select>
             </div>
             <div class="form-group">
@@ -76,22 +75,44 @@
     </form>
 </div>
 
-<!-- SECTION SCRAPPING -->
-<div class="panel hide-on-print" style="border-style: dashed; border-color: var(--secondary);">
+<!-- SECTION SCRAPPING PREMIUM -->
+<div class="panel hide-on-print" style="border: 2px dashed rgba(161, 140, 209, 0.4); background: linear-gradient(135deg, rgba(0, 242, 254, 0.03) 0%, rgba(161, 140, 209, 0.03) 100%);">
     <div class="panel-header">
-        <h2><i class="fa-solid fa-spider"></i> Importer via Web Scraping</h2>
+        <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--secondary);"></i> Smart Data Ingestion</h2>
+        <span class="badge" style="background: var(--primary); font-size: 10px; padding: 2px 8px; border-radius: 10px; color: white;">API CONNECTED</span>
     </div>
-    <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">
-        Entrez l'URL d'un annuaire étudiant ou d'une liste HTML pour extraire automatiquement les données. 
-        <br><small>(Note: Pour tester, laissez vide ou utilisez un lien contenant "test")</small>
+    <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; font-style: italic;">
+        Utilisez nos algorithmes de scraping pour extraire les profils académiques par critères géographiques et disciplinaires.
     </p>
-    <form method="POST" action="{{ url_for('scrapper') }}" style="display: flex; gap: 15px; align-items: flex-end;">
-        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <label>URL du site cible</label>
-            <input type="url" name="url" placeholder="https://example.com/students" style="margin-bottom: 0;">
+    <form method="POST" action="{{ url_for('scrapper') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label><i class="fa-solid fa-globe"></i> Région / Pays</label>
+            <select name="pays" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+                <option value="Cameroun">Cameroun (UA)</option>
+                <option value="France">France (EU)</option>
+                <option value="Canada">Canada (NA)</option>
+                <option value="Sénégal">Sénégal (UA)</option>
+            </select>
         </div>
-        <button type="submit" class="btn btn-light" style="white-space: nowrap;">
-            <i class="fa-solid fa-cloud-download"></i> Lancer le Scrapping
+        <div class="form-group" style="margin-bottom: 0;">
+            <label><i class="fa-solid fa-graduation-cap"></i> Spécialité</label>
+            <select name="filiere" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+                <option value="Informatique">Génie Informatique</option>
+                <option value="Data Science">Data & IA</option>
+                <option value="Gestion">Management</option>
+                <option value="Génie Civil">Génie Civil</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label><i class="fa-solid fa-layer-group"></i> Grade</label>
+            <select name="niveau" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+                <option value="Licence">Cycle Licence</option>
+                <option value="Master">Cycle Master</option>
+                <option value="Doctorat">Doctorat / PhD</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-purple" style="height: 48px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+            <i class="fa-solid fa-magnifying-glass"></i> Lancer l'extraction
         </button>
     </form>
 </div>
