@@ -4,7 +4,6 @@ import google.generativeai as genai
 import pandas as pd
 import json
 import requests
-import threading
 from bs4 import BeautifulSoup
 import random
 import os
@@ -46,29 +45,13 @@ def init_db():
     conn.commit()
     conn.close()
 
+# ROUTE 1: Accueil
 @app.route('/')
 def accueil():
     """ Affiche la page d'accueil simple """
     return render_template('accueil.html')
 
-def keep_alive():
-    def ping_loop():
-        while True:
-            try:
-                url = os.environ.get(
-                    "RENDER_EXTERNAL_URL",
-                    "https://bot-telegram-krsa.onrender.com"
-                )
-                requests.get(url, timeout=10)
-                print("🏓 Ping Render OK")
-            except Exception as e:
-                print(f"❌ Ping échoué : {e}")
-            time.sleep(600)  # toutes les 10 minutes
-
-    t = threading.Thread(target=ping_loop)
-    t.daemon = True
-    t.start()
-
+# ROUTE 2: Ici Je collecte mes donnees
 @app.route('/collecte')
 def collecte():
     """ Affiche le formulaire d'ajout ou de modification """
@@ -101,6 +84,7 @@ def key_rotation():
     print(f'Cle {index} qui a ete utilser')
     return key
 
+# ROUTE 3: Mes resultats analyses
 @app.route('/resultats')
 def resultats():
     """ Affiche les statistiques, graphiques et la base de données complète """
@@ -199,6 +183,7 @@ def api_analyse():
         "recommendations": fallback_recs
     })
 
+# ROUTE 4: Ajouter un étudiant 
 @app.route('/add', methods=["POST"])
 def add_student():
     """ Ajoute un nouvel étudiant et redirige vers les résultats """
@@ -251,7 +236,6 @@ def update_student(id):
 
     return redirect(url_for('resultats'))
 
-# ROUTE 6: Ici je supprime mes donnees
 @app.route('/delete/<int:id>')
 def delete_student(id):
     """ Supprime l'étudiant via son ID puis redirige vers résultats """
@@ -269,18 +253,28 @@ def delete_student(id):
 def scrapper():
     # On récupère les critères du formulaire
     pays = request.form.get("pays", "Cameroun")
+    ville = request.form.get("ville", "Yaoundé")
     filiere = request.form.get("filiere", "Informatique")
     niveau = request.form.get("niveau", "Licence")
     
+    # On définit une URL par défaut car le formulaire n'en demande pas
     url_cible = f"https://fr.wikipedia.org/wiki/{filiere}"
         
     try:
-        # Appel à l'API de Scraping (ScrapingAnt)
         if SCRAPING_API_KEY and SCRAPING_API_KEY != "VOTRE_CLE_SCRAPING":
             api_url = f"https://api.scrapingant.com/v2/general?url={url_cible}&x-api-key={SCRAPING_API_KEY}"
             response = requests.get(api_url, timeout=15)
-            data = response.json()
-            html_content = data.get('content', '')
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    html_content = data.get('content', '')
+                except ValueError:
+                    html_content = response.text
+            else:
+                print(f"Erreur ScrapingAnt {response.status_code}: {response.text}")
+                fallback_response = requests.get(url_cible, timeout=10)
+                html_content = fallback_response.text
         else:
             # Simulation sans clé API
             response = requests.get(url_cible, timeout=10)
@@ -288,24 +282,24 @@ def scrapper():
 
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Génération de données "scrappées" intelligentes basées sur tes choix
-        # Dans un vrai projet, on parserait soup.find_all(...)
-        prenoms = ["Jean", "Marie", "Alain", "Sophie", "Paul", "Alice", "Yann", "Aminata", "Koffi", "Fatou"]
-        noms = ["Dupont", "Traoré", "Kamga", "Müller", "Smith", "Nguyen", "Diallo", "Zongo"]
+        prenoms = ["Jean", "Marie", "Alain", "Sophie", "Paul", "Alice", "Yann", "Aminata", "Koffi", "Fatou","Kengne","Emilie","Claude","Mendy","Djengue","Landry"]
+        noms = ["Dupont", "Traoré", "Kamga", "Müller", "Smith", "Nguyen", "Diallo", "Zongo","Moukourou",
+                "Etoundi","Bavoui","Etoa",
+                "Momo","Tchami","Ekani","Tchakui","Soh"]
         
         new_students = []
-        for _ in range(3): # On génère 3 étudiants par clic
+        for _ in range(5):
             s = (
                 random.choice(noms), 
                 random.choice(prenoms), 
                 random.choice(["Homme", "Femme"]), 
-                pays, 
+                ville, 
                 niveau, 
                 filiere, 
                 round(random.uniform(10, 19), 2), # Moyenne
                 random.randint(5, 25),            # Temps étude
                 random.randint(18, 30),           # Age
-                random.randint(40, 100)           # Participation
+                random.randint(40, 80)           # Participation
             )
             new_students.append(s)
 
@@ -327,5 +321,4 @@ def scrapper():
 init_db()
 
 if __name__ == '__main__':
-    keep_alive()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="127.0.0.1", port=5000)

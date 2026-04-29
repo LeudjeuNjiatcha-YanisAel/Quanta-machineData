@@ -2,6 +2,13 @@
 {% set active_page = 'collecte' %}
 
 {% block content %}
+<style>
+    /* Fix pour rendre le texte visible dans les listes déroulantes (options) */
+    select option {
+        background-color: var(--bg-dark, #1a1a2e);
+        color: white;
+    }
+</style>
 <div class="panel form-panel hide-on-print">
     <div class="panel-header">
         <h2>
@@ -14,6 +21,13 @@
     </div>
     
     <form method="POST" action="{{ url_for('update_student', id=edit_student['id']) if edit_student else url_for('add_student') }}">
+        
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 8px; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
+            <div style="background: rgba(9, 167, 54, 0.2); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--tertiary);">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main);">Informations Personnelles</h3>
+        </div>
         <div class="form-grid-3">
             <div class="form-group">
                 <label>Nom</label>
@@ -35,6 +49,19 @@
                 <input type="text" name="ville" required value="{{ edit_student['ville'] if edit_student else '' }}" placeholder="Ex: Yaoundé" />
             </div>
             <div class="form-group">
+                <label>Âge</label>
+                <input type="number" name="age" required min="10" max="100" value="{{ edit_student['age'] if edit_student else '' }}" placeholder="Ex: 22" />
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-left: 4px solid var(--secondary); padding: 12px 20px; border-radius: 8px; margin: 30px 0 20px 0; display: flex; align-items: center; gap: 12px;">
+            <div style="background: rgba(0, 242, 254, 0.2); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main);">Parcours Académique</h3>
+        </div>
+        <div class="form-grid-3">
+            <div class="form-group">
                 <label>Niveau</label>
                 <select name="niveau" style="width: 100%; padding: 12px 15px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 14px; color: var(--text-main);">
                     <option value="L1" {% if edit_student and edit_student['niveau'] == 'L1' %}selected{% endif %}>Licence 1</option>
@@ -48,10 +75,15 @@
                 <label>Spécialité</label>
                 <input type="text" name="filiere" required value="{{ edit_student['filiere'] if edit_student else '' }}" placeholder="Ex: Informatique" />
             </div>
-            <div class="form-group">
-                <label>Âge</label>
-                <input type="number" name="age" required min="10" max="100" value="{{ edit_student['age'] if edit_student else '' }}" />
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-left: 4px solid var(--tertiary); padding: 12px 20px; border-radius: 8px; margin: 30px 0 20px 0; display: flex; align-items: center; gap: 12px;">
+            <div style="background: rgba(16, 241, 31, 0.2); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--tertiary);">
+                <i class="fa-solid fa-chart-line"></i>
             </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main);">Performances & Statistiques</h3>
+        </div>
+        <div class="form-grid-3">
             <div class="form-group">
                 <label>Temps d'étude (H)</label>
                 <input type="number" step="0.5" name="temps_etude" required value="{{ edit_student['temps'] if edit_student else '' }}" />
@@ -66,17 +98,18 @@
             </div>
         </div>
         
-        <div class="btn-actions" style="margin-top: 25px;">
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> {% if edit_student %}Mettre à jour{% else %}Enregistrer{% endif %}</button>
+        <div class="btn-actions" style="margin-top: 35px; display: flex; gap: 15px;">
+            <button type="submit" class="btn btn-primary" style="padding: 12px 25px; border-radius: 8px; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-paper-plane"></i> {% if edit_student %}Mettre à jour les données{% else %}Enregistrer les données{% endif %}
+            </button>
             {% if edit_student %}
-                <a href="{{ url_for('collecte') }}" class="btn btn-light" style="padding-top:10px;">Annuler</a>
+                <a href="{{ url_for('collecte') }}" class="btn btn-light" style="padding: 12px 25px; border-radius: 8px; display: flex; justify-content: center; align-items: center;">Annuler</a>
             {% endif %}
         </div>
     </form>
 </div>
 
-<!-- SECTION SCRAPPING PREMIUM -->
-<div class="panel hide-on-print" style="border: 2px dashed rgba(161, 140, 209, 0.4); background: linear-gradient(135deg, rgba(0, 242, 254, 0.03) 0%, rgba(161, 140, 209, 0.03) 100%);">
+<div class="panel hide-on-print" style="border: 2px solid rgba(161, 140, 209, 0.4); background: linear-gradient(135deg, rgba(0, 242, 254, 0.03) 0%, rgba(161, 140, 209, 0.03) 100%);">
     <div class="panel-header">
         <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--secondary);"></i> Smart Data Ingestion</h2>
         <span class="badge" style="background: var(--primary); font-size: 10px; padding: 2px 8px; border-radius: 10px; color: white;">API CONNECTED</span>
@@ -87,7 +120,7 @@
     <form method="POST" action="{{ url_for('scrapper') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; align-items: flex-end;">
         <div class="form-group" style="margin-bottom: 0;">
             <label><i class="fa-solid fa-globe"></i> Région / Pays</label>
-            <select name="pays" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+            <select name="pays" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); width: 100%; padding: 12px; border-radius: 8px; color: var(--text-main);">
                 <option value="Cameroun">Cameroun </option>
                 <option value="France">France </option>
                 <option value="Canada">Canada </option>
@@ -95,20 +128,29 @@
             </select>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
+            <label><i class="fa-solid fa-city"></i> Ville</label>
+            <input type="text" name="ville" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); width: 100%; padding: 12px; border-radius: 8px; color: var(--text-main);" placeholder="Ex: Yaoundé" required />
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
             <label><i class="fa-solid fa-graduation-cap"></i> Spécialité</label>
-            <select name="filiere" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+            <select name="filiere" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); width: 100%; padding: 12px; border-radius: 8px; color: var(--text-main);">
                 <option value="Informatique">Informatique</option>
                 <option value="Data Science">Data & IA</option>
-                <option value="Gestion">Management</option>
-                <option value="Génie Civil">Génie Civil</option>
+                <option value="Physique">Physique</option>
+                <option value="Mathematique">Mathematique</option>
+                <option value="Bios-Science">Bios-Science</option>
+                <option value="Chimie">Chimie</option>
             </select>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
             <label><i class="fa-solid fa-layer-group"></i> Grade</label>
-            <select name="niveau" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
-                <option value="Licence">Cycle Licence</option>
-                <option value="Master">Cycle Master</option>
-                <option value="Doctorat">Doctorat / PhD</option>
+            <select name="niveau" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); width: 100%; padding: 12px; border-radius: 8px; color: var(--text-main);">
+                <option value="L1">Licence 1</option>
+                <option value="L2">Licence 2</option>
+                <option value="L3">Licence 3</option>
+                <option value="M1">Master 1</option>
+                <option value="M2">Master 2</option>
+                <option value="D">Doctorat / PhD</option>
             </select>
         </div>
         <button type="submit" class="btn btn-purple" style="height: 48px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">

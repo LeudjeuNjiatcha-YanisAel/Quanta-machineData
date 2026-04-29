@@ -71,6 +71,18 @@
     </div>
 </div>
 
+<div class="panel hide-on-print" style="border: 1px solid rgba(255, 206, 38, 0.3); margin-bottom: 20px;">
+    <div class="panel-header">
+        <h2><i class="fa-solid fa-calculator"></i> Régression Linéaire Simple</h2>
+        <button id="calc-regression" class="btn btn-warning" style="padding: 8px 15px; font-size: 11px; background: #FFCE26; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-chart-line"></i> Calculer la Régression
+        </button>
+    </div>
+    <div id="regression-result" style="display: none; padding: 15px; background: rgba(255, 206, 38, 0.05); border-radius: 8px; margin-top: 10px;">
+        <!-- Results will be injected here -->
+    </div>
+</div>
+
 <div class="panel hide-on-print" style="border: 1px solid rgba(0, 242, 254, 0.3);">
     <div class="panel-header">
         <h2><i class="fa-solid fa-robot"></i> Analyse automatisés</h2>
@@ -337,6 +349,70 @@
                         }
                     }
                 }
+            });
+        }
+
+        // --- GESTION DE LA REGRESSION LINEAIRE SIMPLE ---
+        const calcRegBtn = document.getElementById('calc-regression');
+        if (calcRegBtn) {
+            calcRegBtn.addEventListener('click', () => {
+                const dataPoints = chartData.temps_vs_moyenne || [];
+                const resDiv = document.getElementById('regression-result');
+                
+                if (dataPoints.length < 2) {
+                    resDiv.style.display = 'block';
+                    resDiv.innerHTML = '<p style="color: #f20056;">Pas assez de données pour la régression.</p>';
+                    return;
+                }
+                
+                let n = dataPoints.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+                
+                dataPoints.forEach(p => {
+                    sumX += p.x;
+                    sumY += p.y;
+                    sumXY += p.x * p.y;
+                    sumX2 += p.x * p.x;
+                    sumY2 += p.y * p.y;
+                });
+                
+                let denominator = (n * sumX2 - sumX * sumX);
+                if (denominator === 0) {
+                    resDiv.style.display = 'block';
+                    resDiv.innerHTML = '<p style="color: #f20056;">Impossible de calculer la régression (division par zéro).</p>';
+                    return;
+                }
+                
+                let a = (n * sumXY - sumX * sumY) / denominator;
+                let b = (sumY - a * sumX) / n;
+                
+                // Calcul du coefficient de corrélation r
+                let rDenominator = Math.sqrt(denominator * (n * sumY2 - sumY * sumY));
+                let r = rDenominator === 0 ? 0 : (n * sumXY - sumX * sumY) / rDenominator;
+                let r2 = r * r;
+                
+                let interpret = "";
+                if (r > 0.7) interpret = "Forte corrélation positive : Le temps d'étude influence significativement la moyenne.";
+                else if (r > 0.3) interpret = "Corrélation modérée positive.";
+                else if (r > -0.3) interpret = "Faible corrélation : Le temps d'étude n'a pas d'impact clair sur la moyenne.";
+                else if (r > -0.7) interpret = "Corrélation modérée négative.";
+                else interpret = "Forte corrélation négative.";
+                
+                resDiv.style.display = 'block';
+                resDiv.innerHTML = `
+                    <h4 style="color: #FFCE26; margin-bottom: 10px;"><i class="fa-solid fa-chart-line"></i> Résultat (Temps d'étude vs Moyenne)</h4>
+                    <p style="color: var(--text-main); margin-bottom: 5px;"><strong>Équation de la droite :</strong> y = ${a.toFixed(4)}x + ${b.toFixed(4)}</p>
+                    <p style="color: var(--text-main); margin-bottom: 5px;"><strong>Coefficient de corrélation (r) :</strong> ${r.toFixed(4)}</p>
+                    <p style="color: var(--text-main); margin-bottom: 5px;"><strong>Coefficient de détermination (R²) :</strong> ${r2.toFixed(4)}</p>
+                    <p style="margin-top: 10px; font-size: 13px; color: #00f2fe;">
+                        <i class="fa-solid fa-info-circle"></i> ${interpret}
+                    </p>
+                `;
+                
+                calcRegBtn.innerHTML = '<i class="fa-solid fa-check"></i> Calcul Terminé';
+                calcRegBtn.disabled = true;
+                calcRegBtn.style.opacity = '0.7';
+                calcRegBtn.style.cursor = 'default';
             });
         }
 
