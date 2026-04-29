@@ -4,6 +4,7 @@ import google.generativeai as genai
 import pandas as pd
 import json
 import requests
+import threading
 from bs4 import BeautifulSoup
 import random
 import os
