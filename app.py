@@ -45,13 +45,29 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ROUTE 1: Accueil
 @app.route('/')
 def accueil():
     """ Affiche la page d'accueil simple """
     return render_template('accueil.html')
 
-# ROUTE 2: Ici Je collecte mes donnees
+def keep_alive():
+    def ping_loop():
+        while True:
+            try:
+                url = os.environ.get(
+                    "RENDER_EXTERNAL_URL",
+                    "https://bot-telegram-krsa.onrender.com"
+                )
+                requests.get(url, timeout=10)
+                print("🏓 Ping Render OK")
+            except Exception as e:
+                print(f"❌ Ping échoué : {e}")
+            time.sleep(600)  # toutes les 10 minutes
+
+    t = threading.Thread(target=ping_loop)
+    t.daemon = True
+    t.start()
+
 @app.route('/collecte')
 def collecte():
     """ Affiche le formulaire d'ajout ou de modification """
@@ -84,7 +100,6 @@ def key_rotation():
     print(f'Cle {index} qui a ete utilser')
     return key
 
-# ROUTE 3: Mes resultats analyses
 @app.route('/resultats')
 def resultats():
     """ Affiche les statistiques, graphiques et la base de données complète """
@@ -183,7 +198,6 @@ def api_analyse():
         "recommendations": fallback_recs
     })
 
-# ROUTE 4: Ajouter un étudiant 
 @app.route('/add', methods=["POST"])
 def add_student():
     """ Ajoute un nouvel étudiant et redirige vers les résultats """
@@ -257,7 +271,6 @@ def scrapper():
     filiere = request.form.get("filiere", "Informatique")
     niveau = request.form.get("niveau", "Licence")
     
-    # On définit une URL par défaut car le formulaire n'en demande pas
     url_cible = f"https://fr.wikipedia.org/wiki/{filiere}"
         
     try:
@@ -313,4 +326,5 @@ def scrapper():
 init_db()
 
 if __name__ == '__main__':
+    keep_alive()
     app.run(debug=True, host="0.0.0.0", port=5000)
