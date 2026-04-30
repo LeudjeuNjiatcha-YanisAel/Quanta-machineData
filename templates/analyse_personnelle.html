@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="panel" style="max-width: 800px; margin: 40px auto; text-align: center; border: 2px solid rgba(0, 242, 254, 0.3); background: linear-gradient(135deg, rgba(0, 242, 254, 0.05) 0%, rgba(161, 140, 209, 0.05) 100%);">
+    
+    <div id="loading-section" style="padding: 40px;">
+        <i class="fa-solid fa-robot fa-spin" style="font-size: 50px; color: var(--secondary); margin-bottom: 20px;"></i>
+        <h2 style="color: var(--text-main); margin-bottom: 10px;">Analyse de ton profil en cours...</h2>
+        <p style="color: var(--text-muted); font-size: 15px;">Génération de conseils personnalisés (sommeil, concentration, habitudes)...</p>
+    </div>
+
+    <div id="result-section" style="display: none; padding: 20px; text-align: left;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+            <div style="background: rgba(0, 242, 254, 0.2); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--secondary);">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; color: var(--text-main);">Bilan pour {{ student.prenom }}</h2>
+                <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px;">{{ student.filiere }} | Sommeil : {{ student.sommeil }}h | Distraction : {{ student.distraction }}</p>
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 25px; margin-bottom: 20px; border-left: 4px solid var(--primary);">
+            <h3 style="color: var(--primary); margin-top: 0;"><i class="fa-solid fa-comment-dots"></i> Analyse Générale</h3>
+            <p id="ai-analyse-text" style="color: var(--text-main); font-size: 15px; line-height: 1.6;"></p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 4px solid var(--tertiary);">
+            <h3 style="color: var(--tertiary); margin-top: 0;"><i class="fa-solid fa-leaf"></i> Conseils Santé & Concentration</h3>
+            <ul id="ai-conseils-list" style="color: var(--text-main); font-size: 15px; line-height: 1.8; list-style-type: none; padding: 0;">
+            </ul>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('resultats') }}" class="btn btn-primary" style="padding: 15px 40px; font-size: 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 10px;">
+                Aller aux Résultats Globaux <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async function() {
+    try {
+        const response = await fetch('/api/analyse_personnelle/{{ student.id }}');
+        const data = await response.json();
+        
+        document.getElementById('loading-section').style.display = 'none';
+        document.getElementById('result-section').style.display = 'block';
+        
+        if (data.erreur) {
+            document.getElementById('ai-analyse-text').innerText = data.erreur;
+        } else {
+            document.getElementById('ai-analyse-text').innerText = data.analyse;
+            const ul = document.getElementById('ai-conseils-list');
+            data.conseils.forEach(c => {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fa-solid fa-check" style="color: var(--tertiary); margin-right: 10px;"></i> ' + c;
+                li.style.marginBottom = "10px";
+                ul.appendChild(li);
+            });
+        }
+    } catch (error) {
+        document.getElementById('loading-section').innerHTML = '<h3 style="color: red;">Erreur de connexion.</h3><a href="{{ url_for("resultats") }}" class="btn btn-primary">Passer</a>';
+    }
+});
+</script>
+{% endblock %}

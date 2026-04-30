@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import random
 import os
 import time
-
+import threading
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,19 +39,19 @@ def init_db():
             moyenne REAL NOT NULL, 
             temps REAL NOT NULL,
             age INTEGER NOT NULL,
-            participation INTEGER DEFAULT 0
+            participation INTEGER DEFAULT 0,
+            sommeil REAL DEFAULT 7.0,
+            distraction TEXT DEFAULT 'Aucune'
         )
     ''')
     conn.commit()
     conn.close()
 
-# ROUTE 1: Accueil
 @app.route('/')
 def accueil():
     """ Affiche la page d'accueil simple """
     return render_template('accueil.html')
 
-# ROUTE 2: Ici Je collecte mes donnees
 @app.route('/collecte')
 def collecte():
     """ Affiche le formulaire d'ajout ou de modification """
@@ -70,7 +70,9 @@ def collecte():
                 'id': raw_student[0], 'nom': raw_student[1], 'prenom': raw_student[2],
                 'sexe': raw_student[3], 'ville': raw_student[4], 'niveau': raw_student[5],
                 'filiere': raw_student[6], 'moyenne': raw_student[7], 
-                'temps': raw_student[8], 'age': raw_student[9], 'participation': raw_student[10]
+                'temps': raw_student[8], 'age': raw_student[9], 'participation': raw_student[10],
+                'sommeil': raw_student[11] if len(raw_student) > 11 else 7.0,
+                'distraction': raw_student[12] if len(raw_student) > 12 else 'Aucune'
             }
 
     return render_template('collecte.html', edit_student=edit_student)
@@ -84,7 +86,6 @@ def key_rotation():
     print(f'Cle {index} qui a ete utilser')
     return key
 
-# ROUTE 3: Mes resultats analyses
 @app.route('/resultats')
 def resultats():
     """ Affiche les statistiques, graphiques et la base de données complète """
@@ -155,7 +156,7 @@ def api_analyse():
              Tu es un expert en analyse statistique et en education: {stats}. 
              Format JSON STRICT : {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}.
              Répond en français, tu marqueras les texte important en gras sans utiliser
-             les balises HTML et ton analyse ne doit pas etre court.
+             les balises HTML et ton analyse ne doit pas etre court ni etre long.
              NE PAS exporter autre chose que du JSON."""
             response = model.generate_content(prompt)
             
@@ -183,7 +184,6 @@ def api_analyse():
         "recommendations": fallback_recs
     })
 
-# ROUTE 4: Ajouter un étudiant 
 @app.route('/add', methods=["POST"])
 def add_student():
     """ Ajoute un nouvel étudiant et redirige vers les résultats """
@@ -197,19 +197,21 @@ def add_student():
     temps = float(request.form["temps_etude"].replace(',', '.'))
     age = int(request.form["age"])
     participation = int(request.form["participation"])
+    sommeil = float(request.form.get("sommeil", 7.0))
+    distraction = request.form.get("distraction", "Aucune")
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO students (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation))
+        INSERT INTO students (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation, sommeil, distraction) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation, sommeil, distraction))
+    student_id = cursor.lastrowid
     conn.commit()
     conn.close()
 
-    return redirect(url_for('resultats'))
+    return redirect(url_for('analyse_personnelle', id=student_id))
 
-# ROUTE 5: Update
 @app.route('/update/<int:id>', methods=["POST"])
 def update_student(id):
     """ Met à jour l'étudiant N° id puis redirige vers résultats """
@@ -223,18 +225,20 @@ def update_student(id):
     temps = float(request.form["temps_etude"].replace(',', '.'))
     age = int(request.form["age"])
     participation = int(request.form["participation"])
+    sommeil = float(request.form.get("sommeil", 7.0))
+    distraction = request.form.get("distraction", "Aucune")
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('''
         UPDATE students
-        SET nom=?, prenom=?, sexe=?, ville=?, niveau=?, filiere=?, moyenne=?, temps=?, age=?, participation=?
+        SET nom=?, prenom=?, sexe=?, ville=?, niveau=?, filiere=?, moyenne=?, temps=?, age=?, participation=?, sommeil=?, distraction=?
         WHERE id=?
-    ''', (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation, id))
+    ''', (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation, sommeil, distraction, id))
     conn.commit()
     conn.close()
 
-    return redirect(url_for('resultats'))
+    return redirect(url_for('analyse_personnelle', id=id))
 
 @app.route('/delete/<int:id>')
 def delete_student(id):
@@ -247,8 +251,24 @@ def delete_student(id):
 
     return redirect(url_for('resultats'))
 
+def keep_alive():
+    def ping_loop():
+        while True:
+            try:
+                url = os.environ.get(
+                    "RENDER_EXTERNAL_URL",
+                    "https://bot-telegram-krsa.onrender.com"
+                )
+                requests.get(url, timeout=10)
+                print("Ping Render OK")
+            except Exception as e:
+                print(f"Ping échoué : {e}")
+            time.sleep(600)
 
-# ROUTE 7: Web Scrapper (Via Scraping API)
+    t = threading.Thread(target=ping_loop)
+    t.daemon = True
+    t.start()
+
 @app.route('/scrapper', methods=["POST"])
 def scrapper():
     # On récupère les critères du formulaire
@@ -282,10 +302,22 @@ def scrapper():
 
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        prenoms = ["Jean", "Marie", "Alain", "Sophie", "Paul", "Alice", "Yann", "Aminata", "Koffi", "Fatou","Kengne","Emilie","Claude","Mendy","Djengue","Landry"]
-        noms = ["Dupont", "Traoré", "Kamga", "Müller", "Smith", "Nguyen", "Diallo", "Zongo","Moukourou",
-                "Etoundi","Bavoui","Etoa",
-                "Momo","Tchami","Ekani","Tchakui","Soh"]
+        prenoms = [
+            "Jean", "Marie", "Alain", "Sophie", "Paul", "Alice", "Yann", "Aminata", "Koffi", "Fatou",
+            "Kengne", "Emilie", "Claude", "Mendy", "Djengue", "Landry", "Marc", "Luc", "Julie", "Sarah",
+            "Moussa", "Awa", "Ibrahim", "Oumar", "Amadou", "Binta", "Claire", "Thomas", "Pierre", "Laura",
+            "Emma", "Julien", "Antoine", "Camille", "Hugo", "Lea", "Nadine", "Sylvie", "Bernard", "Michel",
+            "Serge", "Chantal", "David", "Anne", "Nicolas", "Sandrine", "Cedric", "Thierry", "Karim", "Ali",
+            "Samira", "Fatima", "Emmanuel", "Grace", "Christelle"
+        ]
+        noms = [
+            "Dupont", "Traoré", "Kamga", "Müller", "Smith", "Nguyen", "Diallo", "Zongo", "Moukourou", "Etoundi",
+            "Bavoui", "Etoa", "Momo", "Tchami", "Ekani", "Tchakui", "Soh", "Martin", "Bernard", "Thomas",
+            "Petit", "Robert", "Richard", "Durand", "Dubois", "Moreau", "Laurent", "Simon", "Michel", "Lefebvre",
+            "Leroy", "Roux", "David", "Bertrand", "Morel", "Fournier", "Girard", "Bonnet", "Garnier", "Ndiaye",
+            "Diop", "Fall", "Sarr", "Sy", "Gueye", "Cisse", "Toure", "Kone", "Keita", "Diarra", "Fofana",
+            "Coulibaly", "Owona", "Belinga", "Fouda"
+        ]
         
         new_students = []
         for _ in range(5):
@@ -299,7 +331,9 @@ def scrapper():
                 round(random.uniform(10, 19), 2), # Moyenne
                 random.randint(5, 25),            # Temps étude
                 random.randint(18, 30),           # Age
-                random.randint(40, 80)           # Participation
+                random.randint(40, 80),           # Participation
+                round(random.uniform(4, 9), 1),   # Sommeil
+                random.choice(["Réseaux sociaux", "Jeux vidéo", "Séries/Films", "Sorties", "Aucune"]) # Distraction
             )
             new_students.append(s)
 
@@ -307,8 +341,8 @@ def scrapper():
         cursor = conn.cursor()
         for s in new_students:
             cursor.execute('''
-                INSERT INTO students (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO students (nom, prenom, sexe, ville, niveau, filiere, moyenne, temps, age, participation, sommeil, distraction) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', s)
         conn.commit()
         conn.close()
@@ -318,7 +352,79 @@ def scrapper():
         print(f"Erreur Scrapping: {e}")
         return f"Erreur lors de l'extraction : {e}. Vérifiez votre clé API dans le fichier .env"
 
+@app.route('/analyse_personnelle/<int:id>')
+def analyse_personnelle(id):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id=?", (id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        return redirect(url_for('resultats'))
+        
+    student = {
+        'id': row[0], 'nom': row[1], 'prenom': row[2], 'sexe': row[3],
+        'ville': row[4], 'niveau': row[5], 'filiere': row[6],
+        'moyenne': row[7], 'temps': row[8], 'age': row[9],
+        'participation': row[10], 
+        'sommeil': row[11] if len(row) > 11 else 7.0,
+        'distraction': row[12] if len(row) > 12 else 'Aucune'
+    }
+    return render_template('analyse_personnelle.html', student=student)
+
+@app.route('/api/analyse_personnelle/<int:id>')
+def api_analyse_personnelle(id):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id=?", (id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        return json.dumps({"erreur": "Étudiant introuvable"})
+        
+    student = {
+        'prenom': row[2], 'filiere': row[6], 'moyenne': row[7],
+        'temps': row[8], 'participation': row[10], 
+        'sommeil': row[11] if len(row) > 11 else 7.0,
+        'distraction': row[12] if len(row) > 12 else 'Aucune'
+    }
+    
+    try:
+        api_key = key_rotation()
+        if api_key:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            prompt = f"""
+            Tu es un coach étudiant bienveillant. 
+            Voici les données d'un étudiant : {student}.
+            Fais une analyse PERSONNELLE très courte, encourageante et donne des conseils pratiques (ex: nutrition, sommeil, gestion du temps, méthodes de travail liées à sa filière et ses distractions).
+            Format JSON STRICT: {{"analyse": "...", "conseils": ["conseil 1", "conseil 2", "conseil 3"]}}
+            Ne renvoie que du JSON. Ne met pas les balises ```json.
+            """
+            response = model.generate_content(prompt)
+            clean_text = response.text.strip()
+            if "```json" in clean_text:
+                clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in clean_text:
+                clean_text = clean_text.split("```")[1].split("```")[0].strip()
+            return clean_text
+    except Exception as e:
+        print(f"Erreur API IA Perso: {e}")
+        
+    # Fallback
+    return json.dumps({
+        "analyse": f"Bonjour {student['prenom']} ! Tes habitudes montrent que tu travailles dur, mais n'oublie pas l'équilibre.",
+        "conseils": [
+            "Assure-toi de dormir au moins 7 à 8 heures par nuit.",
+            "Consomme des fruits comme la banane ou la pomme pour garder ton énergie.",
+            f"Fais attention à tes distractions comme '{student['distraction']}'. Fixe-toi des limites !"
+        ]
+    })
+
 init_db()
 
 if __name__ == '__main__':
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
+    keep_alive()

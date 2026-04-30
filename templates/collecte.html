@@ -96,6 +96,20 @@
                 <label>Efforts Personnels (%)</label>
                 <input type="number" name="participation" required min="0" max="100" value="{{ edit_student['participation'] if edit_student else '0' }}" />
             </div>
+            <div class="form-group">
+                <label>Heures de sommeil/nuit</label>
+                <input type="number" step="0.5" name="sommeil" required min="0" max="24" value="{{ edit_student['sommeil'] if edit_student else '7.0' }}" />
+            </div>
+            <div class="form-group">
+                <label>Distraction Principale</label>
+                <select name="distraction" style="width: 100%; padding: 12px 15px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 14px; color: var(--text-main);">
+                    <option value="Aucune" {% if edit_student and edit_student['distraction'] == 'Aucune' %}selected{% endif %}>Aucune</option>
+                    <option value="Réseaux sociaux" {% if edit_student and edit_student['distraction'] == 'Réseaux sociaux' %}selected{% endif %}>Réseaux sociaux</option>
+                    <option value="Jeux vidéo" {% if edit_student and edit_student['distraction'] == 'Jeux vidéo' %}selected{% endif %}>Jeux vidéo</option>
+                    <option value="Séries/Films" {% if edit_student and edit_student['distraction'] == 'Séries/Films' %}selected{% endif %}>Séries / Films</option>
+                    <option value="Sorties" {% if edit_student and edit_student['distraction'] == 'Sorties' %}selected{% endif %}>Sorties / Amis</option>
+                </select>
+            </div>
         </div>
         
         <div class="btn-actions" style="margin-top: 35px; display: flex; gap: 15px;">
@@ -111,7 +125,7 @@
 
 <div class="panel hide-on-print" style="border: 2px solid rgba(161, 140, 209, 0.4); background: linear-gradient(135deg, rgba(0, 242, 254, 0.03) 0%, rgba(161, 140, 209, 0.03) 100%);">
     <div class="panel-header">
-        <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--secondary);"></i> Smart Data Ingestion</h2>
+        <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--secondary);"></i> Ajout Automatique</h2>
         <span class="badge" style="background: var(--primary); font-size: 10px; padding: 2px 8px; border-radius: 10px; color: white;">API CONNECTED</span>
     </div>
     <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; font-style: italic;">
