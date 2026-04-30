@@ -1,5 +1,4 @@
-{% extends 'base.html' %} {% set active_page = 'resultats' %} {% block content
-%}
+{% extends 'base.html' %} {% set active_page = 'resultats' %} {% block content %}
 
 <div class="summary-cards">
   <div class="card">
@@ -46,6 +45,30 @@
     <div class="card-info">
       <h3>{{stats.get('pire_moyenne',0)}}</h3>
       <p>Faible Moyenne</p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-icon" style="background: rgba(255, 165, 0, 0.1); color: orange;"><i class="fa-solid fa-chart-pie"></i></div>
+    <div class="card-info">
+      <h3>{{stats.get('ecart_type_moyenne',0)}}</h3>
+      <p>Écart-type Moyenne</p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-icon" style="background: rgba(255, 105, 180, 0.1); color: hotpink;"><i class="fa-solid fa-person-dress"></i></div>
+    <div class="card-info">
+      <h3>{{stats.get('nombre_femmes',0)}}</h3>
+      <p>Femmes</p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-icon" style="background: rgba(65, 105, 225, 0.1); color: royalblue;"><i class="fa-solid fa-person"></i></div>
+    <div class="card-info">
+      <h3>{{stats.get('nombre_hommes',0)}}</h3>
+      <p>Hommes</p>
     </div>
   </div>
 </div>
@@ -122,7 +145,7 @@
       interactive
     </button>
   </div>
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px">
     <div
       class="card"
       style="
@@ -177,97 +200,12 @@
   </div>
 </div>
 
-<div class="panel">
-  <div class="panel-header">
-    <h2><i class="fa-solid fa-list-ul"></i> Étudiants Enregistrés</h2>
-    <div class="panel-tools hide-on-print">
-      <a
-        href="#"
-        class="btn btn-purple"
-        onclick="
-          window.print();
-          return false;
-        "
-      >
-        <i class="fa-solid fa-file-pdf"></i> Imprimer PDF
-      </a>
-    </div>
-  </div>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="color: var(--primary)">
-            <i class="fa-solid fa-id-badge"></i> Étudiant
-          </th>
-          <th style="color: #ffce26">
-            <i class="fa-solid fa-layer-group"></i> Niveau
-          </th>
-          <th style="color: #00f2fe">
-            <i class="fa-solid fa-venus-mars"></i> Genre
-          </th>
-          <th style="color: #10f11f"><i class="fa-solid fa-star"></i> Note</th>
-          <th style="color: #a18cd1">
-            <i class="fa-solid fa-comments"></i> Part.
-          </th>
-          <th class="hide-on-print" style="color: #f20056">
-            <i class="fa-solid fa-wrench"></i> Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in data %}
-        <tr>
-          <td>
-            <div class="avatar-cell">
-              <div class="avatar"><i class="fa-solid fa-user"></i></div>
-              <div>
-                <p><strong>{{ row[1] }} {{ row[2] }}</strong></p>
-                <p style="font-size: 11px; color: var(--text-muted)">
-                  {{ row[6] }} | {{ row[4] }}
-                </p>
-              </div>
-            </div>
-          </td>
-          <td style="font-weight: 500; color: var(--secondary)">
-            {{ row[5] }}
-          </td>
-          <td>{{ row[3] }}</td>
-          <td><span class="status completed">{{ row[7] }} / 20</span></td>
-          <td style="color: var(--text-muted)">{{ row[10] }}%</td>
-          <td class="hide-on-print">
-            <div class="action-buttons">
-              <a
-                href="{{ url_for('collecte', edit_id=row[0]) }}"
-                class="btn-icon edit"
-                title="Editer"
-                ><i class="fa-solid fa-pen"></i
-              ></a>
-              <a
-                href="javascript:void(0)"
-                onclick="showDeleteModal('{{ url_for('delete_student', id=row[0]) }}')"
-                class="btn-icon delete"
-                title="Supprimer"
-                ><i class="fa-solid fa-trash"></i
-              ></a>
-            </div>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td
-            colspan="5"
-            style="text-align: center; color: var(--text-muted); padding: 30px"
-          >
-            Aucun étudiant enregistré. Allez dans l'onglet "Collecte" pour en
-            ajouter.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="panel" style="text-align: center; padding: 40px;">
+  <h2 style="font-size: 24px; color: var(--text-main); margin-bottom: 10px;"><i class="fa-solid fa-users"></i> Base de données</h2>
+  <p style="color: var(--text-muted); margin-bottom: 25px;">Consultez, gérez et imprimez l'ensemble des étudiants enregistrés.</p>
+  <a href="{{ url_for('etudiants') }}" class="btn btn-primary" style="font-size: 15px; padding: 15px 30px; border-radius: 30px;">
+    <i class="fa-solid fa-list-ul"></i> Afficher les étudiants
+  </a>
 </div>
 {% endblock %} {% block scripts %}
 <script>

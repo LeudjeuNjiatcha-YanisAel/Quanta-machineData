@@ -104,7 +104,10 @@ def resultats():
             "participation_moyenne": round(df["participation"].mean(), 2) if "participation" in df else 0,
             "meilleure_moyenne": round(df["moyenne"].max(), 2),
             "pire_moyenne": round(df["moyenne"].min(), 2),
-            "sexe_ratio": df['sexe'].value_counts().to_dict() if 'sexe' in df else {}
+            "sexe_ratio": df['sexe'].value_counts().to_dict() if 'sexe' in df else {},
+            "ecart_type_moyenne": round(df["moyenne"].std(), 2) if len(df) > 1 else 0,
+            "nombre_femmes": int((df['sexe'] == 'Femme').sum()) if 'sexe' in df else 0,
+            "nombre_hommes": int((df['sexe'] == 'Homme').sum()) if 'sexe' in df else 0
         }
     except Exception as e:
         print(f"Erreur stats: {e}")
@@ -123,6 +126,29 @@ def resultats():
         data=df.values.tolist(), 
         stats=stats, 
         chart_data=json.dumps(chart_data)
+    )
+
+@app.route('/etudiants')
+def etudiants():
+    """ Affiche la liste complète des étudiants dans etudiant.html """
+    conn = sqlite3.connect('database.db')
+    df = pd.read_sql_query("SELECT * FROM students", conn)
+    conn.close()
+    
+    return render_template('etudiant.html', data=df.values.tolist())
+
+@app.route('/export_csv')
+def export_csv():
+    from flask import Response
+    conn = sqlite3.connect('database.db')
+    df = pd.read_sql_query("SELECT * FROM students", conn)
+    conn.close()
+
+    csv_data = df.to_csv(index=False, encoding='utf-8')
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=etudiants.csv"}
     )
 
 @app.route('/api/analyse')
