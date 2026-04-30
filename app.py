@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-from google import genai
+import google.generativeai as genai
 import pandas as pd
 import json
 import requests
@@ -20,7 +20,6 @@ index = 0
 SCRAPING_API_KEY = os.getenv("SCRAPING_API_KEY")
 
 
-# Creation de ma base de donnees
 def init_db():
     '''
     Initialisation de la base de données avec les nouvelles variables.
@@ -150,18 +149,15 @@ def api_analyse():
     try:
         api_key = key_rotation()
         if api_key:
-            client = genai.Client(api_key=api_key) 
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
             prompt = f"""
              Tu es un expert en analyse statistique et en education: {stats}. 
              Format JSON STRICT : {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}.
              Répond en français, tu marqueras les texte important en gras sans utiliser
-             les balises HTML et ton analyse ne doit pas etre court ni etre long.
+             les balises HTML et ton analyse ne doit pas etre trop long.
              NE PAS exporter autre chose que du JSON."""
-            
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt
-                )
+            response = model.generate_content(prompt)
             
             clean_text = response.text.strip()
             if "```json" in clean_text:
@@ -274,13 +270,11 @@ def keep_alive():
 
 @app.route('/scrapper', methods=["POST"])
 def scrapper():
-    # On récupère les critères du formulaire
     pays = request.form.get("pays", "Cameroun")
     ville = request.form.get("ville", "Yaoundé")
     filiere = request.form.get("filiere", "Informatique")
     niveau = request.form.get("niveau", "Licence")
     
-    # On définit une URL par défaut car le formulaire n'en demande pas
     url_cible = f"https://fr.wikipedia.org/wiki/{filiere}"
         
     try:
@@ -397,7 +391,8 @@ def api_analyse_personnelle(id):
     try:
         api_key = key_rotation()
         if api_key:
-            client = genai.Client(api_key=api_key)
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
             prompt = f"""
             Tu es un coach étudiant bienveillant. 
             Voici les données d'un étudiant : {student}.
@@ -405,10 +400,7 @@ def api_analyse_personnelle(id):
             Format JSON STRICT: {{"analyse": "...", "conseils": ["conseil 1", "conseil 2", "conseil 3"]}}
             Ne renvoie que du JSON. Ne met pas les balises ```json.
             """
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt
-            )
+            response = model.generate_content(prompt)
             clean_text = response.text.strip()
             if "```json" in clean_text:
                 clean_text = clean_text.split("```json")[1].split("```")[0].strip()
@@ -418,6 +410,7 @@ def api_analyse_personnelle(id):
     except Exception as e:
         print(f"Erreur API IA Perso: {e}")
         
+    # Fallback
     return json.dumps({
         "analyse": f"Bonjour {student['prenom']} ! Tes habitudes montrent que tu travailles dur, mais n'oublie pas l'équilibre.",
         "conseils": [
