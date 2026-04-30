@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-import google.generativeai as genai
+from google import genai
 import pandas as pd
 import json
 import requests
@@ -150,15 +150,18 @@ def api_analyse():
     try:
         api_key = key_rotation()
         if api_key:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            client = genai.Client(api_key=api_key) 
             prompt = f"""
              Tu es un expert en analyse statistique et en education: {stats}. 
              Format JSON STRICT : {{\"summary\": \"...\", \"risks\": \"...\", \"recommendations\": \"...\"}}.
              Répond en français, tu marqueras les texte important en gras sans utiliser
              les balises HTML et ton analyse ne doit pas etre court ni etre long.
              NE PAS exporter autre chose que du JSON."""
-            response = model.generate_content(prompt)
+            
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+                )
             
             clean_text = response.text.strip()
             if "```json" in clean_text:
@@ -257,7 +260,7 @@ def keep_alive():
             try:
                 url = os.environ.get(
                     "RENDER_EXTERNAL_URL",
-                    "https://bot-telegram-krsa.onrender.com"
+                    "https://leudjeu-njiatcha-yanis-ael-24g2349.onrender.com/"
                 )
                 requests.get(url, timeout=10)
                 print("Ping Render OK")
@@ -394,8 +397,7 @@ def api_analyse_personnelle(id):
     try:
         api_key = key_rotation()
         if api_key:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            client = genai.Client(api_key=api_key)
             prompt = f"""
             Tu es un coach étudiant bienveillant. 
             Voici les données d'un étudiant : {student}.
@@ -403,7 +405,10 @@ def api_analyse_personnelle(id):
             Format JSON STRICT: {{"analyse": "...", "conseils": ["conseil 1", "conseil 2", "conseil 3"]}}
             Ne renvoie que du JSON. Ne met pas les balises ```json.
             """
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
             clean_text = response.text.strip()
             if "```json" in clean_text:
                 clean_text = clean_text.split("```json")[1].split("```")[0].strip()
@@ -413,7 +418,6 @@ def api_analyse_personnelle(id):
     except Exception as e:
         print(f"Erreur API IA Perso: {e}")
         
-    # Fallback
     return json.dumps({
         "analyse": f"Bonjour {student['prenom']} ! Tes habitudes montrent que tu travailles dur, mais n'oublie pas l'équilibre.",
         "conseils": [
@@ -426,5 +430,5 @@ def api_analyse_personnelle(id):
 init_db()
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=5000)
     keep_alive()
+    app.run(debug=False, host="0.0.0.0", port=5000)
