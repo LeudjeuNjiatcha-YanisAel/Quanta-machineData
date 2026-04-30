@@ -461,9 +461,24 @@
                   const response = await fetch('/api/analyse');
                   const aiData = await response.json();
 
-                  document.getElementById('ai-summary').innerHTML = aiData.summary;
-                  document.getElementById('ai-risks').innerHTML = aiData.risks;
-                  document.getElementById('ai-recs').innerHTML = aiData.recommendations;
+                  const typeEffect = async (elementId, text, speed = 10) => {
+                      const el = document.getElementById(elementId);
+                      el.innerHTML = '';
+                      if (!text) return;
+                      for (let i = 0; i < text.length; i++) {
+                          if (text.charAt(i) === '\n') {
+                              el.innerHTML += '<br>';
+                          } else {
+                              el.innerHTML += text.charAt(i);
+                          }
+                          await new Promise(r => setTimeout(r, speed));
+                      }
+                  };
+
+                  // On affiche le texte avec l'effet "machine à écrire" séquentiellement
+                  await typeEffect('ai-summary', aiData.summary);
+                  await typeEffect('ai-risks', aiData.risks);
+                  await typeEffect('ai-recs', aiData.recommendations);
 
                   aiBtn.innerHTML = '<i class="fa-solid fa-check"></i> Analyse Terminée';
                   aiBtn.style.background = "var(--tertiary)";

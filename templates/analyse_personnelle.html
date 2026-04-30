@@ -54,14 +54,29 @@ document.addEventListener("DOMContentLoaded", async function() {
         if (data.erreur) {
             document.getElementById('ai-analyse-text').innerText = data.erreur;
         } else {
-            document.getElementById('ai-analyse-text').innerText = data.analyse;
+            const typeEffectText = async (el, text, speed = 15) => {
+                el.innerText = '';
+                if (!text) return;
+                for (let i = 0; i < text.length; i++) {
+                    el.innerText += text.charAt(i);
+                    await new Promise(r => setTimeout(r, speed));
+                }
+            };
+            
+            // Lancement de l'effet machine à écrire
+            await typeEffectText(document.getElementById('ai-analyse-text'), data.analyse);
+            
             const ul = document.getElementById('ai-conseils-list');
-            data.conseils.forEach(c => {
+            for (let c of data.conseils) {
                 const li = document.createElement('li');
-                li.innerHTML = '<i class="fa-solid fa-check" style="color: var(--tertiary); margin-right: 10px;"></i> ' + c;
+                li.innerHTML = '<i class="fa-solid fa-check" style="color: var(--tertiary); margin-right: 10px;"></i> ';
                 li.style.marginBottom = "10px";
                 ul.appendChild(li);
-            });
+                
+                const span = document.createElement('span');
+                li.appendChild(span);
+                await typeEffectText(span, c, 15);
+            }
         }
     } catch (error) {
         document.getElementById('loading-section').innerHTML = '<h3 style="color: red;">Erreur de connexion.</h3><a href="{{ url_for("resultats") }}" class="btn btn-primary">Passer</a>';
