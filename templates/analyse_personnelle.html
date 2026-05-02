@@ -22,7 +22,7 @@
 
         <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 25px; margin-bottom: 20px; border-left: 4px solid var(--primary);">
             <h3 style="color: var(--primary); margin-top: 0;"><i class="fa-solid fa-comment-dots"></i> Analyse Générale</h3>
-            <p id="ai-analyse-text" style="color: var(--text-main); font-size: 15px; line-height: 1.6;"></p>
+            <p id="ai-analyse-text" style="color: var(--text-main); font-size: 15px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;"></p>
         </div>
 
         <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 4px solid var(--tertiary);">
@@ -55,10 +55,12 @@ document.addEventListener("DOMContentLoaded", async function() {
             document.getElementById('ai-analyse-text').innerText = data.erreur;
         } else {
             const typeEffectText = async (el, text, speed = 15) => {
-                el.innerText = '';
+                el.textContent = '';
                 if (!text) return;
+                let currentText = "";
                 for (let i = 0; i < text.length; i++) {
-                    el.innerText += text.charAt(i);
+                    currentText += text.charAt(i);
+                    el.textContent = currentText;
                     await new Promise(r => setTimeout(r, speed));
                 }
             };
