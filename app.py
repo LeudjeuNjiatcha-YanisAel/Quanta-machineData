@@ -87,7 +87,6 @@ def key_rotation():
 
 @app.route('/resultats')
 def resultats():
-    """ Affiche les statistiques, graphiques et la base de données complète """
     conn = sqlite3.connect('database.db')
     df = pd.read_sql_query("SELECT * FROM students", conn)
     conn.close()
@@ -130,7 +129,6 @@ def resultats():
 
 @app.route('/etudiants')
 def etudiants():
-    """ Affiche la liste complète des étudiants dans etudiant.html """
     conn = sqlite3.connect('database.db')
     df = pd.read_sql_query("SELECT * FROM students", conn)
     conn.close()
@@ -381,11 +379,17 @@ def analyse_personnelle(id):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM students WHERE id=?", (id,))
     row = cursor.fetchone()
-    conn.close()
     
     if not row:
+        conn.close()
         return redirect(url_for('resultats'))
         
+    filiere = row[6]
+    cursor.execute("SELECT AVG(moyenne) FROM students WHERE filiere=?", (filiere,))
+    avg_row = cursor.fetchone()
+    moyenne_filiere = round(avg_row[0], 2) if avg_row and avg_row[0] is not None else row[7]
+    conn.close()
+    
     student = {
         'id': row[0], 'nom': row[1], 'prenom': row[2], 'sexe': row[3],
         'ville': row[4], 'niveau': row[5], 'filiere': row[6],
@@ -394,7 +398,28 @@ def analyse_personnelle(id):
         'sommeil': row[11] if len(row) > 11 else 7.0,
         'distraction': row[12] if len(row) > 12 else 'Aucune'
     }
-    return render_template('analyse_personnelle.html', student=student)
+
+    moyenne = student['moyenne']
+    if moyenne >= 16:
+        statut = "Excellent"
+        couleur = "#10f11f" # green
+    elif moyenne >= 14:
+        statut = "Très Bien"
+        couleur = "#00f2fe" # blue
+    elif moyenne >= 12:
+        statut = "Bien"
+        couleur = "#a18cd1" # purple
+    elif moyenne >= 10:
+        statut = "Passable"
+        couleur = "#FFCE26" # yellow
+    elif moyenne >= 8:
+        statut = "Mauvais"
+        couleur = "orange"
+    else:
+        statut = "Très Mauvais"
+        couleur = "#f20056" # red
+
+    return render_template('analyse_personnelle.html', student=student, moyenne_filiere=moyenne_filiere, statut=statut, couleur=couleur)
 
 @app.route('/api/analyse_personnelle/<int:id>')
 def api_analyse_personnelle(id):
