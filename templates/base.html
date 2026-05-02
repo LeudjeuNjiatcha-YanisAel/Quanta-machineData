@@ -27,7 +27,7 @@
         </h1>
 
         <div style="display: flex; align-items: center; gap: 20px">
-          <nav class="btn-actions hide-on-print">
+          <nav id="nav-menu" class="btn-actions hide-on-print">
             <a
               href="{{ url_for('accueil') }}"
               class="btn {% if active_page == 'accueil' %}btn-primary{% else %}btn-light{% endif %}"
@@ -47,6 +47,10 @@
               <i class="fa-solid fa-chart-pie"></i> Résultats
             </a>
           </nav>
+
+          <button id="mobile-menu-btn" class="theme-toggle hide-on-print mobile-only" title="Menu">
+             <i class="fa-solid fa-bars"></i>
+          </button>
 
           <button
             id="theme-btn"
@@ -109,6 +113,14 @@
           icon.classList.replace("fa-sun", "fa-moon");
         }
       });
+
+      const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+      const navMenu = document.getElementById("nav-menu");
+      if(mobileMenuBtn && navMenu) {
+        mobileMenuBtn.addEventListener("click", () => {
+          navMenu.classList.toggle("show-menu");
+        });
+      }
 
       // --- GESTION DU MODAL DE SUPPRESSION ---
       const deleteModal = document.getElementById("delete-modal");
